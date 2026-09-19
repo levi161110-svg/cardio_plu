@@ -1,0 +1,972 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const CardioPlusApp());
+}
+
+class CardioPlusApp extends StatelessWidget {
+  const CardioPlusApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Cardio+',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+        fontFamily: 'Arial',
+      ),
+      home: const TelaLogin(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+// ==========================================
+// MODELO DE DADOS & BASE SIMULADA
+// ==========================================
+class Utilizador {
+  final String nome;
+  final String email;
+  final String palavraPasse;
+
+  Utilizador({
+    required this.nome,
+    required this.email,
+    required this.palavraPasse,
+  });
+}
+
+List<Utilizador> utilizadoresRegistados = [
+  Utilizador(nome: "Maria Silva", email: "maria@email.com", palavraPasse: "123456"),
+];
+
+// ==========================================
+// 1. TELA DE LOGIN
+// ==========================================
+class TelaLogin extends StatefulWidget {
+  const TelaLogin({Key? key}) : super(key: key);
+
+  @override
+  State<TelaLogin> createState() => _TelaLoginState();
+}
+
+class _TelaLoginState extends State<TelaLogin> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+  String? _mensagemErro;
+
+  void _fazerLogin() {
+    String email = _emailController.text.trim();
+    String senha = _senhaController.text;
+
+    Utilizador? userEncontrado;
+    for (var u in utilizadoresRegistados) {
+      if (u.email.toLowerCase() == email.toLowerCase() && u.palavraPasse == senha) {
+        userEncontrado = u;
+        break;
+      }
+    }
+
+    if (userEncontrado != null) {
+      setState(() => _mensagemErro = null);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => PaginaInicial(utilizador: userEncontrado!)),
+      );
+    } else {
+      setState(() => _mensagemErro = 'E-mail ou palavra-passe incorretos.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.favorite, size: 80, color: Colors.red),
+              const SizedBox(height: 12),
+              const Text('Cardio+', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.red)),
+              const Text('Adesão e Reabilitação Cardiovascular', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 32),
+
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'E-mail',
+                  prefixIcon: const Icon(Icons.email, color: Colors.red),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _senhaController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Palavra-passe',
+                  prefixIcon: const Icon(Icons.lock, color: Colors.red),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              if (_mensagemErro != null) ...[
+                const SizedBox(height: 12),
+                Text(_mensagemErro!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              ],
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: _fazerLogin,
+                  child: const Text('Entrar', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const TelaCadastro()));
+                },
+                child: const Text('Não tem conta? Registe-se aqui', style: TextStyle(color: Colors.blueAccent, fontSize: 16)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 2. TELA DE CADASTRO
+// ==========================================
+class TelaCadastro extends StatefulWidget {
+  const TelaCadastro({Key? key}) : super(key: key);
+
+  @override
+  State<TelaCadastro> createState() => _TelaCadastroState();
+}
+
+class _TelaCadastroState extends State<TelaCadastro> {
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+  String? _erro;
+
+  void _cadastrar() {
+    String nome = _nomeController.text.trim();
+    String email = _emailController.text.trim();
+    String senha = _senhaController.text;
+
+    if (nome.isEmpty || email.isEmpty || senha.isEmpty) {
+      setState(() => _erro = "Preencha todos os campos.");
+      return;
+    }
+
+    if (!email.contains('@')) {
+      setState(() => _erro = "Insira um e-mail válido.");
+      return;
+    }
+
+    utilizadoresRegistados.add(Utilizador(nome: nome, email: email, palavraPasse: senha));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Conta criada com sucesso! Faça login.')));
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Criar Conta'), backgroundColor: Colors.red),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            TextField(
+              controller: _nomeController,
+              decoration: InputDecoration(
+                labelText: 'Nome Completo',
+                prefixIcon: const Icon(Icons.person, color: Colors.red),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'E-mail',
+                prefixIcon: const Icon(Icons.email, color: Colors.red),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _senhaController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Palavra-passe',
+                prefixIcon: const Icon(Icons.lock, color: Colors.red),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            if (_erro != null) ...[
+              const SizedBox(height: 12),
+              Text(_erro!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: _cadastrar,
+                child: const Text('Concluir Registo', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 3. PÁGINA INICIAL
+// ==========================================
+class PaginaInicial extends StatelessWidget {
+  final Utilizador utilizador;
+
+  const PaginaInicial({Key? key, required this.utilizador}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Cardio+'),
+        backgroundColor: Colors.red,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TelaLogin()));
+            },
+          )
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Olá, ${utilizador.nome}!', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+            const Text('Que bom ter você aqui!', style: TextStyle(color: Colors.grey, fontSize: 16)),
+            const SizedBox(height: 20),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.favorite, color: Colors.red, size: 30),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '"Cuidar do coração também é manter a rotina."',
+                      style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
+                _construirBotao(Icons.favorite, 'Minha Saúde', Colors.pink, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const TelaMinhaSaude()));
+                }),
+                _construirBotao(Icons.check_circle, 'Minhas Metas', Colors.green, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const TelaMinhasMetas()));
+                }),
+                _construirBotao(Icons.menu_book, 'Aprender', Colors.blue, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const TelaAprender()));
+                }),
+                _construirBotao(Icons.smart_toy, 'CardioIA', Colors.purple, () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const TelaCardioIA()));
+                }),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _construirBotao(IconData icone, String titulo, Color cor, VoidCallback aoClicar) {
+    return InkWell(
+      onTap: aoClicar,
+      child: Container(
+        decoration: BoxDecoration(
+          color: cor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cor, width: 2),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icone, size: 44, color: cor),
+            const SizedBox(height: 8),
+            Text(titulo, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cor)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 4. MINHA SAÚDE & ATIVIDADES (COM IA INTEGRADA)
+// ==========================================
+class TelaMinhaSaude extends StatefulWidget {
+  const TelaMinhaSaude({Key? key}) : super(key: key);
+
+  @override
+  State<TelaMinhaSaude> createState() => _TelaMinhaSaudeState();
+}
+
+class _TelaMinhaSaudeState extends State<TelaMinhaSaude> {
+  bool _caminhada = false;
+  bool _alongamento = false;
+  bool _respiracao = false;
+
+  final TextEditingController _duvidaController = TextEditingController();
+  final List<Map<String, String>> _historicoIa = [
+    {
+      'remetente': 'ia',
+      'texto': 'Olá! Sou a IA Guia de Exercícios. Tem dúvidas sobre como realizar a caminhada, alongamento ou respiração com segurança? Clique em uma opção abaixo ou digite sua dúvida!'
+    }
+  ];
+
+  void _perguntarIa(String pergunta) {
+    if (pergunta.trim().isEmpty) return;
+
+    setState(() {
+      _historicoIa.add({'remetente': 'user', 'texto': pergunta});
+    });
+
+    _duvidaController.clear();
+
+    String resposta = "";
+    String pLower = pergunta.toLowerCase();
+
+    if (pLower.contains('caminhada') || pLower.contains('caminhar')) {
+      resposta = "🚶‍♂️ **Como fazer a Caminhada com Segurança:**\n"
+          "1. Use calçados confortáveis e planos.\n"
+          "2. Mantenha a postura ereta e olhe para a frente.\n"
+          "3. Mantenha um ritmo onde consiga conversar sem ficar sem ar.\n"
+          "⚠️ Pare imediatamente se sentir tontura, dor no peito ou falta de ar excessiva.";
+    } else if (pLower.contains('alongamento') || pLower.contains('alongar')) {
+      resposta = "🧘‍♀️ **Como fazer Alongamentos Leves:**\n"
+          "1. Movimente pescoço, ombros e braços de forma suave.\n"
+          "2. Não mude bruscamente de posição para evitar tontura.\n"
+          "3. Mantenha o alongamento por 10 a 15 segundos sem "
+          "forçar a articulação e sem fazer movimentos bruscos.";
+    } else if (pLower.contains('respiração') || pLower.contains('respiracao') || pLower.contains('respirar')) {
+      resposta = "🫁 **Técnica de Respiração Guiada:**\n"
+          "1. Sente-se confortavelmente numa cadeira com as costas apoiadas.\n"
+          "2. Inspire lentamente pelo nariz contando até 3, expandindo o abdômen.\n"
+          "3. Solte o ar devagar pela boca entreaberta contando até 4.\n"
+          "4. Repita 5 a 10 vezes sem pressa.";
+    } else if (pLower.contains('parar') || pLower.contains('sinal') || pLower.contains('dor')) {
+      resposta = "⚠️ **Sinais de Alerta para PARAR o Exercício:**\n"
+          "• Dor, aperto ou desconforto no peito, pescoço ou braço.\n"
+          "• Tontura, suor frio ou visão embaçada.\n"
+          "• Falta de ar intensa e desproporcional.\n"
+          "Se sentir esses sintomas, sente-se, descanse e informe a sua equipe de saúde!";
+    } else {
+      resposta = "💡 Lembre-se: A prática de exercícios deve seguir as orientações da sua equipe de saúde. Mantenha um ritmo confortável, evite exageros e faça pausas sempre que necessário.";
+    }
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _historicoIa.add({'remetente': 'ia', 'texto': resposta});
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Minha Saúde & Atividades'), backgroundColor: Colors.pink),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Acompanhamento Diário', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.pink)),
+            const SizedBox(height: 6),
+            const Text('Marque as atividades que realizou hoje:'),
+            const SizedBox(height: 12),
+
+            CheckboxListTile(
+              title: const Text('Caminhada orientada (15-30 min)'),
+              value: _caminhada,
+              activeColor: Colors.pink,
+              onChanged: (val) => setState(() => _caminhada = val ?? false),
+            ),
+            CheckboxListTile(
+              title: const Text('Alongamentos leves'),
+              value: _alongamento,
+              activeColor: Colors.pink,
+              onChanged: (val) => setState(() => _alongamento = val ?? false),
+            ),
+            CheckboxListTile(
+              title: const Text('Exercícios de Respiração'),
+              value: _respiracao,
+              activeColor: Colors.pink,
+              onChanged: (val) => setState(() => _respiracao = val ?? false),
+            ),
+
+            const Divider(height: 32, thickness: 2),
+
+            // SEÇÃO IA ASSISTENTE DE EXERCÍCIOS
+            Row(
+              children: const [
+                Icon(Icons.smart_toy, color: Colors.pink, size: 28),
+                SizedBox(width: 8),
+                Text('IA Guia de Exercícios', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.pink)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text('Aprenda a executar cada movimento com segurança e sem esforço excessivo:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+            const SizedBox(height: 12),
+
+            // Botões Rápidos para Dúvidas Comuns
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _chipOpcao('Como fazer a Caminhada?', () => _perguntarIa('Como fazer a caminhada?')),
+                  _chipOpcao('Dicas de Alongamento', () => _perguntarIa('Como fazer alongamento?')),
+                  _chipOpcao('Técnica de Respiração', () => _perguntarIa('Como fazer a respiração?')),
+                  _chipOpcao('Quando devo parar?', () => _perguntarIa('Quando devo parar?')),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Caixas de Conversa da IA
+            Container(
+              height: 230,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.pink.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.pink.shade200),
+              ),
+              child: ListView.builder(
+                itemCount: _historicoIa.length,
+                itemBuilder: (context, index) {
+                  final item = _historicoIa[index];
+                  bool ehUser = item['remetente'] == 'user';
+                  return Align(
+                    alignment: ehUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: ehUser ? Colors.pink : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: ehUser ? null : Border.all(color: Colors.pink.shade100),
+                      ),
+                      child: Text(
+                        item['texto']!,
+                        style: TextStyle(
+                          color: ehUser ? Colors.white : Colors.black87,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Campo para digitar dúvida sobre exercícios
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _duvidaController,
+                    decoration: InputDecoration(
+                      hintText: 'Pergunte como fazer um exercício...',
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.pink),
+                  onPressed: () => _perguntarIa(_duvidaController.text),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chipOpcao(String texto, VoidCallback aoClicar) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: ActionChip(
+        label: Text(texto, style: const TextStyle(fontSize: 12, color: Colors.pink, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        side: const BorderSide(color: Colors.pink),
+        onPressed: aoClicar,
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 5. MINHAS METAS (METAS SEMANAIS DINÂMICAS)
+// ==========================================
+class TelaMinhasMetas extends StatefulWidget {
+  const TelaMinhasMetas({Key? key}) : super(key: key);
+
+  @override
+  State<TelaMinhasMetas> createState() => _TelaMinhasMetasState();
+}
+
+class _TelaMinhasMetasState extends State<TelaMinhasMetas> {
+  int _semanaSelecionada = 1;
+
+  final Map<int, Map<String, bool>> _metasPorSemana = {
+    1: {
+      'Participei da minha atividade orientada': true,
+      'Li uma informação sobre saúde no Cardio+': true,
+      'Segui as orientações da minha equipe': false,
+      'Realizei a rotina de caminhada leve': false,
+    },
+    2: {
+      'Realizei os exercícios de respiração guiada': false,
+      'Conversei com um familiar sobre minha rotina': true,
+      'Evitei alimentos com excesso de sal': true,
+      'Fiz uma pergunta educativa ao CardioIA': false,
+    },
+    3: {
+      'Li sobre os Sinais de Alerta no aplicativo': false,
+      'Participei da minha atividade orientada': false,
+      'Realizei os alongamentos suaves': true,
+      'Mantive a rotina de cuidados recomendada': false,
+    },
+    4: {
+      'Mantive os hábitos saudáveis durante toda a semana': false,
+      'Li uma dica sobre alimentação saudável': true,
+      'Explorei um novo tópico na biblioteca Aprender': false,
+      'Organizei minha rotina de saúde com a família': false,
+    },
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    Map<String, bool> metasDaSemana = _metasPorSemana[_semanaSelecionada]!;
+    int concluidas = metasDaSemana.values.where((e) => e).length;
+    int total = metasDaSemana.length;
+    double percentagem = concluidas / total;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Minhas Metas'),
+        backgroundColor: Colors.green,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Semana $_semanaSelecionada',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
+                ),
+                DropdownButton<int>(
+                  value: _semanaSelecionada,
+                  icon: const Icon(Icons.arrow_drop_down_circle, color: Colors.green),
+                  items: [1, 2, 3, 4].map((int semana) {
+                    return DropdownMenuItem<int>(
+                      value: semana,
+                      child: Text('Semana $semana', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    );
+                  }).toList(),
+                  onChanged: (int? novaSemana) {
+                    if (novaSemana != null) {
+                      setState(() {
+                        _semanaSelecionada = novaSemana;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.shade300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Progresso da Semana $_semanaSelecionada: $concluidas de $total metas',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(
+                    value: percentagem,
+                    minHeight: 12,
+                    backgroundColor: Colors.grey.shade300,
+                    color: Colors.green,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${(percentagem * 100).toInt()}% concluído',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    percentagem == 1.0
+                        ? '"Parabéns! Você completou todas as metas desta semana!"'
+                        : '"Você está indo bem! Continue cuidando da sua rotina."',
+                    style: const TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            const Text(
+              'Lista de Atividades da Semana:',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+
+            Expanded(
+              child: ListView(
+                children: metasDaSemana.keys.map((String chave) {
+                  return CheckboxListTile(
+                    title: Text(chave, style: const TextStyle(fontSize: 15)),
+                    value: metasDaSemana[chave],
+                    activeColor: Colors.green,
+                    onChanged: (bool? valor) {
+                      setState(() {
+                        _metasPorSemana[_semanaSelecionada]![chave] = valor ?? false;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.autorenew, color: Colors.white),
+                label: const Text(
+                  'Próxima Semana de Metas',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _semanaSelecionada = (_semanaSelecionada % 4) + 1;
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 6. APRENDER (CATEGORIZADO)
+// ==========================================
+class TelaAprender extends StatelessWidget {
+  const TelaAprender({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Aprender'), backgroundColor: Colors.blue),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          Text('Biblioteca Cardiovascular', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue)),
+          SizedBox(height: 8),
+          Text('Explore os conteúdos educativos por categoria:'),
+          SizedBox(height: 16),
+
+          CategoriasCard(
+            categoria: 'Reabilitação Cardiovascular',
+            icone: Icons.favorite,
+            cor: Colors.red,
+            topicos: [
+              'O que é? É um programa estruturado de exercícios e educação para melhorar a saúde do coração.',
+              'Para quem é indicada? Para pessoas após infarto, cirurgias cardíacas ou com insuficiência cardíaca.',
+              'Qual sua importância? Aumenta a capacidade física, reduz internações e melhora a qualidade de vida.'
+            ],
+          ),
+          CategoriasCard(
+            categoria: 'Alimentação Saudável',
+            icone: Icons.restaurant,
+            cor: Colors.orange,
+            topicos: [
+              'Redução de Sal: Evite temperos industrializados para manter a pressão sob controlo.',
+              'Mais Fibras: Dê preferência a frutas, vegetais e grãos integrais.',
+              'Gorduras Boas: Prefira azeite de oliva e evite frituras e alimentos ultraprocessados.'
+            ],
+          ),
+          CategoriasCard(
+            categoria: 'Atividade Física',
+            icone: Icons.directions_walk,
+            cor: Colors.green,
+            topicos: [
+              'Regularidade: Pequenas caminhadas diárias fazem grande diferença.',
+              'Sempre Orientado: Realize exercícios conforme a prescrição da sua equipa de saúde.'
+            ],
+          ),
+          CategoriasCard(
+            categoria: 'Família e Cuidadores',
+            icone: Icons.people,
+            cor: Colors.purple,
+            topicos: [
+              'Como ajudar: Incentive a participação na rotina e ajude na organização dos horários.',
+              'Sinais de Alerta: Esteja atento a queixas de dor no peito ou falta de ar excessiva.'
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CategoriasCard extends StatelessWidget {
+  final String categoria;
+  final IconData icone;
+  final Color cor;
+  final List<String> topicos;
+
+  const CategoriasCard({
+    Key? key,
+    required this.categoria,
+    required this.icone,
+    required this.cor,
+    required this.topicos,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ExpansionTile(
+        leading: Icon(icone, color: cor, size: 32),
+        title: Text(categoria, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: cor)),
+        children: topicos.map((topico) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Expanded(child: Text(topico, style: const TextStyle(fontSize: 15, height: 1.3))),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 7. CARDIOIA (ASSISTENTE VIRTUAL GERAL)
+// ==========================================
+class TelaCardioIA extends StatefulWidget {
+  const TelaCardioIA({Key? key}) : super(key: key);
+
+  @override
+  State<TelaCardioIA> createState() => _TelaCardioIAState();
+}
+
+class _TelaCardioIAState extends State<TelaCardioIA> {
+  final TextEditingController _mensagemController = TextEditingController();
+  final List<Map<String, String>> _mensagens = [
+    {
+      'remetente': 'ia',
+      'texto': 'Olá! Sou o CardioIA, seu assistente educativo. Como posso ajudar com dúvidas sobre a saúde do seu coração hoje?'
+    }
+  ];
+
+  void _enviarPergunta(String pergunta) {
+    if (pergunta.trim().isEmpty) return;
+
+    setState(() {
+      _mensagens.add({'remetente': 'user', 'texto': pergunta});
+    });
+
+    _mensagemController.clear();
+
+    String respostaIA = "";
+    String pLower = pergunta.toLowerCase();
+
+    if (pLower.contains('reabilitação') || pLower.contains('reabilitacao')) {
+      respostaIA = "A reabilitação cardiovascular é um conjunto de ações que busca auxiliar na recuperação e na melhora da capacidade funcional, sempre de acordo com a orientação dos profissionais de saúde.";
+    } else if (pLower.contains('remedio') || pLower.contains('medicamento') || pLower.contains('remédio')) {
+      respostaIA = "⚠️ Regra de Segurança: O CardioIA não pode indicar ou modificar medicamentos. Por favor, consulte o seu médico ou equipa de saúde sobre as suas prescrições.";
+    } else if (pLower.contains('exercicio') || pLower.contains('exercício') || pLower.contains('treino')) {
+      respostaIA = "⚠️ Importante: O CardioIA não prescreve treinos individualizados. A prática de exercícios deve seguir estritamente as orientações dadas pelos seus profissionais de saúde.";
+    } else if (pLower.contains('tratamento')) {
+      respostaIA = "Manter o tratamento é fundamental para evitar complicações do coração e manter a sua qualidade de vida no dia a dia!";
+    } else {
+      respostaIA = "Esta é uma ótima pergunta sobre saúde cardiovascular. Lembre-se de que o Cardio+ possui caráter educativo e não substitui a consulta com sua equipe de saúde.";
+    }
+
+    Future.delayed(const Duration(milliseconds: 600), () {
+      setState(() {
+        _mensagens.add({'remetente': 'ia', 'texto': respostaIA});
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('CardioIA - Assistente Virtual'), backgroundColor: Colors.purple),
+      body: Column(
+        children: [
+          Container(
+            color: Colors.purple.shade50,
+            padding: const EdgeInsets.all(8),
+            child: const Text(
+              'Nota: O CardioIA tem fins apenas educativos e não substitui profissionais de saúde.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.purple, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _mensagens.length,
+              itemBuilder: (context, index) {
+                final msg = _mensagens[index];
+                bool ehUser = msg['remetente'] == 'user';
+                return Align(
+                  alignment: ehUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: ehUser ? Colors.purple : Colors.purple.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      msg['texto']!,
+                      style: TextStyle(
+                        color: ehUser ? Colors.white : Colors.purple.shade900,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                _chipSugestao("O que é reabilitação cardiovascular?"),
+                _chipSugestao("Por que continuar o tratamento?"),
+                _chipSugestao("Pode indicar remédios?"),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _mensagemController,
+                    decoration: InputDecoration(
+                      hintText: 'Digite sua dúvida...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FloatingActionButton(
+                  mini: true,
+                  backgroundColor: Colors.purple,
+                  onPressed: () => _enviarPergunta(_mensagemController.text),
+                  child: const Icon(Icons.send, color: Colors.white),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chipSugestao(String texto) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: ActionChip(
+        label: Text(texto, style: const TextStyle(fontSize: 12, color: Colors.purple)),
+        backgroundColor: Colors.purple.shade50,
+        onPressed: () => _enviarPergunta(texto),
+      ),
+    );
+  }
+}
